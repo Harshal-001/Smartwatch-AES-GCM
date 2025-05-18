@@ -11,7 +11,7 @@ from aes_gcm_iot import AesGcmEnhanced
 
 def save_results_to_file(std_time, enh_time, std_hr_time, enh_hr_time, std_workout_time, enh_workout_time):
     """Save the benchmark results to a text file"""
-    with open('smartwatch_real_world_results.txt', 'w') as f:
+    with open('Results/smartwatch_real_world_results.txt', 'w') as f:
         f.write("=== SMARTWATCH DAILY OPERATION SIMULATION RESULTS ===\n\n")
 
         # Overall Results
@@ -70,24 +70,24 @@ def visualize_results(std_time, enh_time, std_hr_time, enh_hr_time, std_workout_
     x = np.arange(len(labels))
     width = 0.5
 
-    plt.bar(x, times, width, color=['#ff9999', '#66b3ff'])
+    bars = plt.bar(x, times, width, color=['#ff9999', '#66b3ff'])
     plt.xlabel('Implementation')
     plt.ylabel('Execution Time (ms)')
     plt.title('Overall Performance Comparison')
     plt.xticks(x, labels)
 
-    # Add values on top of bars
-    for i, v in enumerate(times):
-        plt.text(i, v + 50, f"{v:.1f} ms", ha='center')
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height + 0.01*max(times),
+                f"{height:.1f} ms", ha='center', va='bottom')
 
-    # Add improvement percentage
     improvement = ((std_time - enh_time) / std_time) * 100
-    plt.text(0.5, max(times) * 0.6, f"{improvement:.1f}% Improvement",
+    plt.text(0.5, times[0] * 0.5, f"{improvement:.1f}% Improvement",
              ha='center', fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
 
+    plt.ylim(0, max(times) * 1.15)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
 
-    # 2. Workload comparison
     plt.subplot(2, 2, 2)
     categories = ['Heart Rate\nMonitoring', 'Fitness\nTracking']
     std_times = [std_hr_time, std_workout_time]
@@ -96,31 +96,35 @@ def visualize_results(std_time, enh_time, std_hr_time, enh_hr_time, std_workout_
     x = np.arange(len(categories))
     width = 0.35
 
-    plt.bar(x - width / 2, std_times, width, label='Standard', color='#ff9999')
-    plt.bar(x + width / 2, enh_times, width, label='Enhanced', color='#66b3ff')
+    plt.bar(x - width/2, std_times, width, label='Standard', color='#ff9999')
+    plt.bar(x + width/2, enh_times, width, label='Enhanced', color='#66b3ff')
 
     plt.xlabel('Workload Type')
     plt.ylabel('Execution Time (ms)')
     plt.title('Performance by Workload Type')
     plt.xticks(x, categories)
     plt.legend()
+
+    plt.ylim(0, max(std_times + enh_times) * 1.15)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
 
     # 3. Speedup factor comparison
     plt.subplot(2, 2, 3)
-    speedups = [std_time / enh_time, std_hr_time / enh_hr_time, std_workout_time / enh_workout_time]
+    speedups = [std_time/enh_time, std_hr_time/enh_hr_time, std_workout_time/enh_workout_time]
     labels = ['Overall', 'Heart Rate', 'Fitness']
     colors = ['#66b3ff', '#99ff99', '#ffcc99']
 
-    plt.bar(labels, speedups, color=colors)
+    bars = plt.bar(labels, speedups, color=colors)
     plt.xlabel('Scenario')
     plt.ylabel('Speedup Factor (x)')
     plt.title('Performance Speedup Factors')
 
-    # Add values on top of bars
-    for i, v in enumerate(speedups):
-        plt.text(i, v + 0.1, f"{v:.2f}x", ha='center')
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height * 1.02,
+                f"{height:.2f}x", ha='center', va='bottom')
 
+    plt.ylim(0, max(speedups) * 1.15)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
 
     # 4. Battery impact visualization
@@ -139,19 +143,21 @@ def visualize_results(std_time, enh_time, std_hr_time, enh_hr_time, std_workout_
     # Add a marker for standard implementation
     plt.plot(['Battery Usage'], [std_battery], 'ro', markersize=10, label='Standard Usage')
 
-    # Add text for the percentage saved
+    # Add text for the percentage saved - position it properly
     saving_percent = (saved / std_battery) * 100
-    plt.text(0, std_battery * 0.5, f"{saving_percent:.1f}% Saved", ha='center',
+    plt.text(0, std_battery * 0.7, f"{saving_percent:.1f}% Saved", ha='center',
              bbox=dict(facecolor='white', alpha=0.8))
 
+    # Set y-axis limit to be just a bit higher than the standard battery usage
+    plt.ylim(0, std_battery * 1.15)
     plt.ylabel('Battery Units')
     plt.title('Estimated Battery Impact')
     plt.legend()
     plt.grid(axis='y', linestyle='--', alpha=0.7)
 
-    # Adjust layout and save
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig('smartwatch_real_world_results.png', dpi=300)
+    # Use tight_layout with appropriate padding
+    plt.tight_layout(rect=[0, 0, 1, 0.95], pad=1.5)
+    plt.savefig('smartwatch_real_world_results.png', dpi=300, bbox_inches='tight')
     print("\nVisualization saved as 'smartwatch_real_world_results.png'")
     plt.show()
 
